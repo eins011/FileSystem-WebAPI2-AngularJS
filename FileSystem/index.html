@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    <style type="text/css">
+        ul{
+            list-style-type:none;
+        }
+        ul li a{
+            text-decoration: underline;
+            color: darkblue;
+        }
+        ul li a:hover{
+            cursor:pointer;
+        }
+        table{
+            border-spacing:0;
+        }
+        table tr th{
+            background-color:gray;
+            color: white;
+            border: 1px solid gray;
+            text-align: center;
+            height:50px;
+            width: 150px;
+            font-family: 'Segoe UI';
+            font-weight:normal;
+        }
+        table tr td{
+            border: 1px solid gray;
+            text-align:center;
+            font-family:'Segoe UI';
+            font-size:18px;
+        }
+        .cp{
+            font-weight:bold;
+        }
+        .cp span{
+            font-weight:normal;
+            font-family:'Segoe UI';
+            margin-left:20px;
+            color:gray;
+        }
+        .list_container{
+            border:1px solid gray;
+        }
+    </style>
+</head>
+<body>
+    <div ng-app="DirApp" ng-controller="DirController">
+
+        <table>
+            <tr>
+                <th>Less 10 mb</th>
+                <th>10 mb - 50 mb</th>
+                <th>More 100 mb</th>
+            </tr>
+            <tr>
+                <td ng-repeat="s in sizes track by $index">{{s}}</td>
+            </tr>
+        </table>
+        <p class="cp">Current path: <span>{{curPath}}</span></p>
+        <div class="list_container">
+            <ul>
+                <li>
+                    <a ng-click="getDir('...')">...</a>
+                </li>
+                <li ng-repeat="d in dirs">
+                    <a ng-click="getDir(d)">{{d}}</a>
+                </li>
+                <li ng-repeat="file in files">
+                    {{file}}
+                </li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        var app = angular.module('DirApp', []);
+
+        app.controller('DirController', function ($scope, $http) {
+
+            $scope.apiUrl = 'api/directories/';
+            
+            $scope.getDir = function (d) {
+
+                if (typeof d === "undefined")
+                    $scope.url = $scope.apiUrl;
+                else if (d == "...")
+                    $scope.url = $scope.apiUrl + '?dir=' + $scope.rootPath;
+                else {
+                    if ($scope.curPath == "drives") $scope.url = $scope.apiUrl + '?dir=' + d;
+                    else $scope.url = $scope.apiUrl + '?dir=' + $scope.curPath + "\\" + d;
+                }
+
+                $http.get($scope.url).then(function (responce) {
+                    $scope.curPath = responce.data.Directories[0];
+                    $scope.rootPath = responce.data.Directories[1];
+                    responce.data.Directories.splice(0, 2);
+                    $scope.files = responce.data.Files;
+                    $scope.dirs = responce.data.Directories;
+                    $scope.sizes = responce.data.SizeCount;
+                });
+            };
+
+            $scope.getDir();
+        });
+    </script>
+</body>
+</html>
